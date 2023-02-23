@@ -13,31 +13,24 @@ export class App extends Component {
     page: 1, 
     error: null,
     imgArr: [],
+    totalHits: null,
     status: 'idle',
   }
 
   componentDidUpdate(prevProp, prevState) {
     const {query, page} = this.state;
 
-    if(prevState.query !== query) {
-      this.setState({status: "pending", page: 1})
-
-      getImagesFromPixabay(query, page)
-      .then(images => this.setState({imgArr: images.hits, status: "resolved"}))
-      .catch(err => this.setState({error: err, status: "rejected"}))
-    }
-
-    if(prevState.page !== page) {
+    if(prevState.query !== query || prevState.page !== page) {
       this.setState({status: "pending"})
 
       getImagesFromPixabay(query, page)
-      .then(images => this.setState(prevState => ({imgArr: [...prevState.imgArr, ...images.hits], status: "resolved"})))
+      .then(images => this.setState(prevState => ({imgArr: [...prevState.imgArr, ...images.hits], totalHits: images.totalHits, status: "resolved"})))
       .catch(err => this.setState({error: err, status: "rejected"}))
     }
-    }
+  }
 
   handleInputValue = (inputValue) => {
-      this.setState({query: inputValue})
+      this.setState({query: inputValue, page: 1, imgArr: []})
     }
 
   onloadMoreClick = () => {
@@ -45,12 +38,12 @@ export class App extends Component {
     }
   
   render() {
-    const { state: {imgArr, status, error}, handleInputValue, onloadMoreClick} = this;
+    const { state: {page, imgArr, status, error, totalHits}, handleInputValue, onloadMoreClick} = this;
 
     const isPending = status === "pending";
     const isResolved = status === "resolved";
     const isError = status === "rejected";
-    const isBtnShown = Boolean(imgArr.length);
+    const isBtnShown =  Boolean(imgArr.length) && !(totalHits <= page * 12);
 
       return (
         <Container>
